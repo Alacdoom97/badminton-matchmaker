@@ -1,0 +1,350 @@
+
+> aura-match@1.1.0 test
+> node --test tests/*.test.js
+
+TAP version 13
+# Subtest: configured text palette exceeds WCAG AA 4.5:1
+ok 1 - configured text palette exceeds WCAG AA 4.5:1
+  ---
+  duration_ms: 2.223939
+  type: 'test'
+  ...
+# Subtest: input borders and focus rings exceed 3:1 against white
+ok 2 - input borders and focus rings exceed 3:1 against white
+  ---
+  duration_ms: 0.322686
+  type: 'test'
+  ...
+# Subtest: preferences are exactly singles, doubles and mixed
+ok 3 - preferences are exactly singles, doubles and mixed
+  ---
+  duration_ms: 3.20687
+  type: 'test'
+  ...
+# Subtest: demo schedule respects every availability and capacity limit
+ok 4 - demo schedule respects every availability and capacity limit
+  ---
+  duration_ms: 62.514483
+  type: 'test'
+  ...
+# Subtest: two players can play singles
+ok 5 - two players can play singles
+  ---
+  duration_ms: 1.647721
+  type: 'test'
+  ...
+# Subtest: three players use Kungen with nobody benched
+ok 6 - three players use Kungen with nobody benched
+  ---
+  duration_ms: 1.166877
+  type: 'test'
+  ...
+# Subtest: five players on two courts use one singles and one Kungen
+ok 7 - five players on two courts use one singles and one Kungen
+  ---
+  duration_ms: 1.591578
+  type: 'test'
+  ...
+# Subtest: seven players on two courts use doubles and Kungen even without singles preferences
+ok 8 - seven players on two courts use doubles and Kungen even without singles preferences
+  ---
+  duration_ms: 10.374185
+  type: 'test'
+  ...
+# Subtest: eleven players on three courts all join matches
+ok 9 - eleven players on three courts all join matches
+  ---
+  duration_ms: 5.785935
+  type: 'test'
+  ...
+# Subtest: 20 players on five courts all play with no capacity warning
+ok 10 - 20 players on five courts all play with no capacity warning
+  ---
+  duration_ms: 8.787575
+  type: 'test'
+  ...
+# Subtest: 22 players on five courts rest two per round and rotate everyone through
+ok 11 - 22 players on five courts rest two per round and rotate everyone through
+  ---
+  duration_ms: 15.97434
+  type: 'test'
+  ...
+# Subtest: odd overflow never replaces doubles with Kungen at the expense of another player
+ok 12 - odd overflow never replaces doubles with Kungen at the expense of another player
+  ---
+  duration_ms: 10.052221
+  type: 'test'
+  ...
+# Subtest: all-singles preferences fall back to doubles rather than unnecessary benching
+ok 13 - all-singles preferences fall back to doubles rather than unnecessary benching
+  ---
+  duration_ms: 7.153454
+  type: 'test'
+  ...
+# Subtest: four singles-preferring players use two singles courts when available
+ok 14 - four singles-preferring players use two singles courts when available
+  ---
+  duration_ms: 4.929955
+  type: 'test'
+  ...
+# Subtest: mixed preferences without compatible groups fall back to other games
+ok 15 - mixed preferences without compatible groups fall back to other games
+  ---
+  duration_ms: 3.594604
+  type: 'test'
+  ...
+# Subtest: mixed can be saved without a mixed group and will fall back
+ok 16 - mixed can be saved without a mixed group and will fall back
+  ---
+  duration_ms: 1.419919
+  type: 'test'
+  ...
+# Subtest: gender does not determine mixed grouping
+ok 17 - gender does not determine mixed grouping
+  ---
+  duration_ms: 1.621642
+  type: 'test'
+  ...
+# Subtest: mixed is preserved when a 2+2 pairing group is available
+ok 18 - mixed is preserved when a 2+2 pairing group is available
+  ---
+  duration_ms: 4.329566
+  type: 'test'
+  ...
+# Subtest: legacy either preferences migrate to flexible doubles without losing player data
+ok 19 - legacy either preferences migrate to flexible doubles without losing player data
+  ---
+  duration_ms: 2.587167
+  type: 'test'
+  ...
+# Subtest: late arrivals, early departures, opt-outs and exact boundaries
+ok 20 - late arrivals, early departures, opt-outs and exact boundaries
+  ---
+  duration_ms: 12.643068
+  type: 'test'
+  ...
+# Subtest: Kungen follows available headcount, not the total registered roster
+ok 21 - Kungen follows available headcount, not the total registered roster
+  ---
+  duration_ms: 1.892941
+  type: 'test'
+  ...
+# Subtest: court availability is checked independently for full rounds
+ok 22 - court availability is checked independently for full rounds
+  ---
+  duration_ms: 4.900491
+  type: 'test'
+  ...
+# Subtest: live capacity report considers arrival, departure, opt-outs and court windows
+ok 23 - live capacity report considers arrival, departure, opt-outs and court windows
+  ---
+  duration_ms: 0.503638
+  type: 'test'
+  ...
+# Subtest: non-overlapping roster above capacity does not claim simultaneous overflow
+ok 24 - non-overlapping roster above capacity does not claim simultaneous overflow
+  ---
+  duration_ms: 4.941623
+  type: 'test'
+  ...
+# Subtest: players leaving after the first round get first-game priority over repeat games
+ok 25 - players leaving after the first round get first-game priority over repeat games
+  ---
+  duration_ms: 3.575796
+  type: 'test'
+  ...
+# Subtest: one round and insufficient space honestly warns about players with no games
+ok 26 - one round and insufficient space honestly warns about players with no games
+  ---
+  duration_ms: 2.606997
+  type: 'test'
+  ...
+# Subtest: seed is deterministic and reshuffle changes partners
+ok 27 - seed is deterministic and reshuffle changes partners
+  ---
+  duration_ms: 15.31064
+  type: 'test'
+  ...
+# Subtest: equal availability yields near-even resting rotation
+ok 28 - equal availability yields near-even resting rotation
+  ---
+  duration_ms: 7.931837
+  type: 'test'
+  ...
+# Subtest: five singles players rotate Kungen assignments, not the same trio each round
+ok 29 - five singles players rotate Kungen assignments, not the same trio each round
+  ---
+  duration_ms: 0.974078
+  type: 'test'
+  ...
+# Subtest: changeover and trailing minutes never create partial rounds
+ok 30 - changeover and trailing minutes never create partial rounds
+  ---
+  duration_ms: 3.136584
+  type: 'test'
+  ...
+# Subtest: empty and one-player rosters do not crash or invent a game
+ok 31 - empty and one-player rosters do not crash or invent a game
+  ---
+  duration_ms: 1.043372
+  type: 'test'
+  ...
+# Subtest: no booked court in a round leaves everyone resting and reports capacity
+ok 32 - no booked court in a round leaves everyone resting and reports capacity
+  ---
+  duration_ms: 0.870841
+  type: 'test'
+  ...
+# Subtest: validation rejects malformed intervals, duplicate names, bad dates and unsupported preferences
+ok 33 - validation rejects malformed intervals, duplicate names, bad dates and unsupported preferences
+  ---
+  duration_ms: 0.899706
+  type: 'test'
+  ...
+# Subtest: last full round stays inside the booking
+ok 34 - last full round stays inside the booking
+  ---
+  duration_ms: 0.648187
+  type: 'test'
+  ...
+# Subtest: all headcounts 0-32 and 1-8 courts attain maximum participation
+ok 35 - all headcounts 0-32 and 1-8 courts attain maximum participation
+  ---
+  duration_ms: 398.737146
+  type: 'test'
+  ...
+# Subtest: 60 seeded random sessions preserve limits and use every possible place
+ok 36 - 60 seeded random sessions preserve limits and use every possible place
+  ---
+  duration_ms: 149.013034
+  type: 'test'
+  ...
+# Subtest: preferred format count matches exhaustive optimum in 36 small sessions
+ok 37 - preferred format count matches exhaustive optimum in 36 small sessions
+  ---
+  duration_ms: 13.600064
+  type: 'test'
+  ...
+# Subtest: first-game reservations cover everyone in tight overlapping arrival/opt-out windows
+ok 38 - first-game reservations cover everyone in tight overlapping arrival/opt-out windows
+  ---
+  duration_ms: 6.344486
+  type: 'test'
+  ...
+# Subtest: whole-session player coverage matches an independent exhaustive oracle in 60 small sessions
+ok 39 - whole-session player coverage matches an independent exhaustive oracle in 60 small sessions
+  ---
+  duration_ms: 57.75945
+  type: 'test'
+  ...
+# Subtest: maximum size session: 64 players, 12 courts, 48 rounds
+ok 40 - maximum size session: 64 players, 12 courts, 48 rounds
+  ---
+  duration_ms: 694.216338
+  type: 'test'
+  ...
+# Subtest: public snapshot contains no private profile attributes
+ok 41 - public snapshot contains no private profile attributes
+  ---
+  duration_ms: 1.759149
+  type: 'test'
+  ...
+# Subtest: valid public snapshots are reconstructed and totals are recalculated
+ok 42 - valid public snapshots are reconstructed and totals are recalculated
+  ---
+  duration_ms: 3.128191
+  type: 'test'
+  ...
+# Subtest: public snapshot rejects double booking and unknown players
+ok 43 - public snapshot rejects double booking and unknown players
+  ---
+  duration_ms: 1.098725
+  type: 'test'
+  ...
+# Subtest: public snapshot rejects forged times, omitted rounds, and extra courts
+ok 44 - public snapshot rejects forged times, omitted rounds, and extra courts
+  ---
+  duration_ms: 0.75015
+  type: 'test'
+  ...
+# Subtest: compressed share link round trips with Unicode
+ok 45 - compressed share link round trips with Unicode
+  ---
+  duration_ms: 38.289776
+  type: 'test'
+  ...
+# Subtest: malformed, unsupported and oversized links are rejected
+ok 46 - malformed, unsupported and oversized links are rejected
+  ---
+  duration_ms: 0.748577
+  type: 'test'
+  ...
+# Subtest: HTML export escapes untrusted player and session names
+ok 47 - HTML export escapes untrusted player and session names
+  ---
+  duration_ms: 1.989016
+  type: 'test'
+  ...
+# Subtest: text and HTML contain every round, player and court
+ok 48 - text and HTML contain every round, player and court
+  ---
+  duration_ms: 1.176432
+  type: 'test'
+  ...
+# Subtest: singles and Kungen share links round trip with every player and accurate rotation totals
+ok 49 - singles and Kungen share links round trip with every player and accurate rotation totals
+  ---
+  duration_ms: 10.494362
+  type: 'test'
+  ...
+# Subtest: legacy doubles-only snapshots without Kungen totals remain readable
+ok 50 - legacy doubles-only snapshots without Kungen totals remain readable
+  ---
+  duration_ms: 0.9095
+  type: 'test'
+  ...
+# Subtest: snapshot rejects two-player, four-player, duplicate and unknown Kungen rotations
+ok 51 - snapshot rejects two-player, four-player, duplicate and unknown Kungen rotations
+  ---
+  duration_ms: 7.680909
+  type: 'test'
+  ...
+# Subtest: snapshot rejects Kungen containing both teams and a rotation
+ok 52 - snapshot rejects Kungen containing both teams and a rotation
+  ---
+  duration_ms: 2.30383
+  type: 'test'
+  ...
+# Subtest: snapshot rejects two players per side in singles
+ok 53 - snapshot rejects two players per side in singles
+  ---
+  duration_ms: 1.554251
+  type: 'test'
+  ...
+# Subtest: snapshot rejects an active match on a court outside its booking
+ok 54 - snapshot rejects an active match on a court outside its booking
+  ---
+  duration_ms: 2.108376
+  type: 'test'
+  ...
+# Subtest: both text exports list all Kungen players, instructions and allocated-not-active minutes
+ok 55 - both text exports list all Kungen players, instructions and allocated-not-active minutes
+  ---
+  duration_ms: 1.974875
+  type: 'test'
+  ...
+# Subtest: HTML safely escapes names in a Kungen rotation
+ok 56 - HTML safely escapes names in a Kungen rotation
+  ---
+  duration_ms: 1.572869
+  type: 'test'
+  ...
+1..56
+# tests 56
+# suites 0
+# pass 56
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1688.327534

@@ -1,0 +1,289 @@
+{
+  "version": 1,
+  "seed": 1,
+  "settings": {
+    "title": "22 players, five courts",
+    "venue": "Malmö BadmintonCenter",
+    "date": "2026-10-01",
+    "start": "18:00",
+    "duration": 120,
+    "roundMinutes": 20,
+    "breakMinutes": 0,
+    "courts": [
+      {
+        "id": "court-1",
+        "name": "Court 1",
+        "from": "18:00",
+        "until": "20:00"
+      },
+      {
+        "id": "court-2",
+        "name": "Court 2",
+        "from": "18:00",
+        "until": "20:00"
+      },
+      {
+        "id": "court-3",
+        "name": "Court 3",
+        "from": "18:00",
+        "until": "20:00"
+      },
+      {
+        "id": "court-4",
+        "name": "Court 4",
+        "from": "18:00",
+        "until": "20:00"
+      },
+      {
+        "id": "court-5",
+        "name": "Court 5",
+        "from": "18:00",
+        "until": "20:00"
+      }
+    ]
+  },
+  "players": [
+    {
+      "id": "p0",
+      "name": "Player 1",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p1",
+      "name": "Player 2",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p2",
+      "name": "Player 3",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p3",
+      "name": "Player 4",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p4",
+      "name": "Player 5",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p5",
+      "name": "Player 6",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p6",
+      "name": "Player 7",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p7",
+      "name": "Player 8",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p8",
+      "name": "Player 9",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p9",
+      "name": "Player 10",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p10",
+      "name": "Player 11",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p11",
+      "name": "Player 12",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p12",
+      "name": "Player 13",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p13",
+      "name": "Player 14",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p14",
+      "name": "Player 15",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p15",
+      "name": "Player 16",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p16",
+      "name": "Player 17",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p17",
+      "name": "Player 18",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p18",
+      "name": "Player 19",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p19",
+      "name": "Player 20",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p20",
+      "name": "Player 21",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p21",
+      "name": "Player 22",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    }
+  ]
+}

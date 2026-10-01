@@ -1,0 +1,184 @@
+{
+  "version": 1,
+  "seed": 1,
+  "settings": {
+    "title": "Thursday social - every kind of game",
+    "venue": "Malmö BadmintonCenter",
+    "date": "2026-10-01",
+    "start": "18:00",
+    "duration": 120,
+    "roundMinutes": 20,
+    "breakMinutes": 0,
+    "courts": [
+      {
+        "id": "court-1",
+        "name": "Court 1",
+        "from": "18:00",
+        "until": "20:00"
+      },
+      {
+        "id": "court-2",
+        "name": "Court 2",
+        "from": "18:00",
+        "until": "20:00"
+      },
+      {
+        "id": "court-3",
+        "name": "Court 3",
+        "from": "18:00",
+        "until": "20:00"
+      },
+      {
+        "id": "court-4",
+        "name": "Court 4",
+        "from": "18:00",
+        "until": "20:00"
+      }
+    ]
+  },
+  "players": [
+    {
+      "id": "p0",
+      "name": "Emma Lind",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "singles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p1",
+      "name": "Oliver Berg",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "singles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p2",
+      "name": "Sofia Nilsson",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "singles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p3",
+      "name": "Hugo Andersson",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "singles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p4",
+      "name": "Alice Svensson",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "singles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p5",
+      "name": "Elias Holm",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p6",
+      "name": "Maja Larsson",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p7",
+      "name": "William Ek",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p8",
+      "name": "Alma Lund",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "doubles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p9",
+      "name": "Noah Eriksson",
+      "gender": "undisclosed",
+      "mixedGroup": "woman",
+      "preference": "mixed",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p10",
+      "name": "Freja Dahl",
+      "gender": "undisclosed",
+      "mixedGroup": "man",
+      "preference": "mixed",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p11",
+      "name": "Lucas Sjöberg",
+      "gender": "undisclosed",
+      "mixedGroup": "woman",
+      "preference": "mixed",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p12",
+      "name": "Alex Nord",
+      "gender": "undisclosed",
+      "mixedGroup": "man",
+      "preference": "mixed",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    }
+  ]
+}

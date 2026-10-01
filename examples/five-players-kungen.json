@@ -1,0 +1,84 @@
+{
+  "version": 1,
+  "seed": 1,
+  "settings": {
+    "title": "Five friends, two courts",
+    "venue": "Malmö BadmintonCenter",
+    "date": "2026-10-01",
+    "start": "18:00",
+    "duration": 120,
+    "roundMinutes": 20,
+    "breakMinutes": 0,
+    "courts": [
+      {
+        "id": "court-1",
+        "name": "Court 1",
+        "from": "18:00",
+        "until": "20:00"
+      },
+      {
+        "id": "court-2",
+        "name": "Court 2",
+        "from": "18:00",
+        "until": "20:00"
+      }
+    ]
+  },
+  "players": [
+    {
+      "id": "p0",
+      "name": "Emma Lind",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "singles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p1",
+      "name": "Oliver Berg",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "singles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p2",
+      "name": "Sofia Nilsson",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "singles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p3",
+      "name": "Hugo Andersson",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "singles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    },
+    {
+      "id": "p4",
+      "name": "Alex Nord",
+      "gender": "undisclosed",
+      "mixedGroup": "none",
+      "preference": "singles",
+      "level": 3,
+      "arrival": "18:00",
+      "departure": "20:00",
+      "skipRounds": []
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+import React from 'react';
+const shapes = {
+  grid: <><rect x="3" y="3" width="7" height="7" rx="1.4"/><rect x="14" y="3" width="7" height="7" rx="1.4"/><rect x="3" y="14" width="7" height="7" rx="1.4"/><rect x="14" y="14" width="7" height="7" rx="1.4"/></>,
+  users: <><circle cx="9" cy="7" r="3"/><path d="M3 21v-3a6 6 0 0112 0v3M16 4a3 3 0 010 6m2 4a5 5 0 013 4v3"/></>,
+  clock: <><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></>,
+  calendar: <><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M7 3v4m10-4v4M3 11h18m-14 4h2m3 0h2m3 0h1"/></>,
+  court: <><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M12 5v14M6 5v14m12-14v14M3 9h9m0 6h9"/></>,
+  plus: <path d="M12 5v14M5 12h14"/>,
+  arrow: <path d="M4 12h16m-6-6l6 6-6 6"/>,
+  left: <path d="M14 6l-6 6 6 6"/>,
+  right: <path d="M10 6l6 6-6 6"/>,
+  down: <path d="M6 9l6 6 6-6"/>,
+  download: <><path d="M12 3v12m-5-5l5 5 5-5M4 15v5h16v-5"/></>,
+  upload: <><path d="M12 15V3m-5 5l5-5 5 5M4 15v5h16v-5"/></>,
+  share: <><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M9 10l6-4m-6 8l6 4"/></>,
+  shuffle: <><path d="M3 6h3c5 0 7 12 12 12h3m-4-4l4 4-4 4M3 18h3c2 0 3-2 4-4m4-4c1-2 2-4 4-4h3m-4-4l4 4-4 4"/></>,
+  edit: <><path d="M14 5l5 5M3 21l5-1L21 7a3 3 0 00-5-5L3 15z"/></>,
+  trash: <><path d="M3 6h18M9 6V3h6v3M5 6l1 15h12l1-15M10 10v7m4-7v7"/></>,
+  close: <path d="M6 6l12 12M6 18L18 6"/>,
+  check: <path d="M4 12l5 5L20 6"/>,
+  shield: <><path d="M12 3l8 3v6c0 5-8 9-8 9s-8-4-8-9V6z"/><path d="M8 12l3 3 5-6"/></>,
+  help: <><circle cx="12" cy="12" r="9"/><path d="M9 9a3 3 0 016 0c0 2-3 2-3 4m0 3h.01"/></>,
+  spark: <><path d="M12 3l2.3 6.7L21 12l-6.7 2.3L12 21l-2.3-6.7L3 12l6.7-2.3z"/></>,
+  coffee: <><path d="M4 9h12v7a4 4 0 01-4 4H8a4 4 0 01-4-4zm12 0h2a3 3 0 010 6h-2M7 3v3m5-3v3"/></>,
+  location: <><path d="M19 10c0 6-7 11-7 11S5 16 5 10a7 7 0 1114 0z"/><circle cx="12" cy="10" r="2"/></>,
+  list: <><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></>,
+  link: <><path d="M10 13a5 5 0 007 0l3-3a5 5 0 00-7-7l-2 2M14 11a5 5 0 00-7 0l-3 3a5 5 0 007 7l2-2"/></>,
+};
+export function Icon({name,size=20,...rest}){return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false" {...rest}>{shapes[name] || shapes.grid}</svg>;}
+export function Shuttle({size=34,...rest}){return <svg width={size} height={size} viewBox="0 0 64 64" fill="none" aria-hidden="true" {...rest}><path d="M14 18l20 27 15-15L22 10zM23 15l16 25M32 18l12 17M17 27l17 12" stroke="currentColor" strokeWidth="3" strokeLinejoin="round"/><path d="M34 45c8 10 22-3 11-12" fill="currentColor"/></svg>;}
