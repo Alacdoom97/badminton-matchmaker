@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased - Reliable edits, fairer rotation and bounded exports
+
+- Keep start time, duration and court count as drafts until a valid value is committed.
+- Save successful schedules and shuffle seeds together; restore exact assignments without blocking startup.
+- Pause saving when another tab changes the session, and support importing recovery envelopes.
+- Preserve shared links during brand navigation and reset generation state after worker failures.
+- Seed equal-priority first-game reservations and improve equivalent all-Mixed selections.
+- Offer estimated-playing-time rotation priority to spread Kungen's internal rests.
+- Reject session windows containing skipped or repeated Stockholm clock times.
+- Bound image resolution and ZIP image data, select round images and cancel exports.
+- Commit a dependency lockfile and require production browser checks before Pages deployment.
+
 ## 1.1.0 - Singles, flexible preferences, capacity and Kungen
 
 - Replace the preference selector with Singles, Doubles and Mixed.
@@ -15,3 +27,4 @@
 - Add fictional examples and regression/property/oracle tests.
 
 Verification: 56 Node tests and 52 isolated Chromium UI/export checks passed. A normally served Vite build, module-worker loading, full Playwright/axe suite and actual hosting were not verified in the restricted preparation environment. See TESTING.md.
+

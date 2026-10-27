@@ -4,6 +4,9 @@ on:
   workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   check:
     runs-on: ubuntu-latest
@@ -12,9 +15,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Install dependencies
-        run: |
-          if [ -f package-lock.json ]; then npm ci; else npm install; fi
+          cache: npm
+      - run: npm ci
       - run: npm run check
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
@@ -24,3 +26,4 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+

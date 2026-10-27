@@ -3,7 +3,7 @@ import { LIMITS, validateSettings, slots, FORMAT_NAMES, activeCourts } from './m
 export function makeSnapshot(setup, schedule) {
   return {
     kind: 'aura-match-snapshot', version: 1,
-    settings: setup.settings,
+    settings: validateSettings(setup.settings),
     // Deliberately omit gender, mixed pairing group, skill and player preferences.
     players: setup.players.map(({ id, name }) => ({ id, name })),
     schedule,
@@ -116,3 +116,4 @@ export async function readShareLink(hash) {
   if(data.length>LIMITS.shareBytes)throw new Error('The shared session is too large.');
   return validateSnapshot(JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(data)));
 }
+

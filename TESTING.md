@@ -1,42 +1,38 @@
-# Test and release report - 1.1.0
+# Test and release report
 
-## Executed successfully
+## Current reliability changes
 
-**56 Node tests**, run using `npm test` with the application modules directly. The result log is in `docs/unit-test-results.txt`.
+- `npm ci` installs the committed dependency lockfile.
+- `npm run check` passes locally: **82 unit tests** and the production Vite build.
+- The served Playwright suite contains **25 tests**, including the existing axe, mobile layout, persistence, sharing and download checks plus 12 new reliability/export regressions.
+- The local macOS command runner cannot launch Chromium because operating-system process permissions reject its launch. This is an environment failure before any browser test runs, not a passing browser result. The PR workflow runs the full suite on a GitHub-hosted Linux runner; consult its checks for the browser result.
 
-Coverage includes singles/doubles/mixed preferences, flexible fallback, Kungen, maximum per-round participation, 20-on-five versus 22-on-five capacity, no player/court double booking, valid mixed groups, full-round availability, opt-outs, early departures, legacy preference migration, deterministic seeds, resting rotation, Kungen rotation counts, warnings, snapshot privacy/validation, old snapshots, Unicode links, bounded decoding, HTML escaping, complete text exports and the existing contrast palette.
+The new regressions cover safe timing/count drafts, successful-schedule restoration, asynchronous legacy restoration, worker construction/loading failures, share-fragment preservation, recovery-envelope import, concurrent-tab conflict resolution and deletion, selected ZIP images, export cancellation, canvas cleanup, image/ZIP memory limits, seeded first-game ties, equivalent mixed selection, optional estimated-playing-time rotation and Stockholm daylight-saving boundaries.
 
-Property and independent-oracle checks include every headcount 0-32 on 1-8 courts; 60 random multi-round sessions; exact preferred-format comparisons against an exhaustive oracle in 36 small sessions; first-game coverage compared with an independent exhaustive oracle in 60 small sessions; a tight overlapping-availability scenario; and 64 players on 12 courts over 48 rounds.
-
-**52 isolated Chromium UI checks** passed using the updated source with the actual React/ReactDOM runtime. The report is `docs/isolated-browser-checks.json`. They cover live capacity warnings, court-count changes, draft court booking capacity, preference choices, mixed-without-group saving, add/edit/delete, minimum two-player generation, singles/Kungen cards and tables, participation counts, allocated-time wording, keyboard skip navigation, modal Escape/focus return, responsive layouts, read-only sharing and preservation of the local setup.
-
-**Actual browser exports** were downloaded and checked: a Kungen JPEG, HTML, plain text and a ZIP containing six round JPEGs plus both text alternatives. All participants and rotation instructions were present. Desktop, mobile and JPEG output were visually inspected. No JavaScript runtime errors were recorded during these checks.
-
-The source JSX and native-module static distribution also passed syntax checks.
-
-## Scope limitations
-
-The environment could not access the npm registry (`EAI_AGAIN`). Chromium blocked navigation to local and test web origins (`ERR_BLOCKED_BY_ADMINISTRATOR`). Therefore `npm install`, the production Vite build, the provided served Playwright/axe suite, normal ESM/module-worker loading, real-origin browser persistence and actual public hosting were **not verified here**.
-
-For isolated checks, source was transpiled and injected into a browser document. Local storage was represented by an in-memory implementation, and the real main-thread scheduler fallback was exercised. Those checks are useful but do not establish a hosted release pass, an axe pass, or WCAG conformance.
-
-The prebuilt distribution was transpiled offline to native JavaScript modules with the existing locally bundled licensed runtimes. It is not labelled as a successful Vite build. It must still be smoke-tested on the target host.
+Both rotation modes retain the existing maximum-participation and independent whole-session coverage oracles. Preferred-format optimality is checked for the default mode; estimated-playing-time priority intentionally permits extra fallback assignments to distribute Kungen rests. Local maximum-size scheduling remains approximately 0.4 seconds on a desktop and is not a mobile timing guarantee.
 
 ## Run before publishing
 
 ```bash
-npm install
+npm ci
 npm run check
 npx playwright install chromium
 npm run test:e2e
 ```
 
-The Playwright configuration builds and serves the production app. Its tests include real-origin persistence, module-worker generation, axe scans, preference editing, 20/22-player capacity, two-player singles, Kungen, read-only links, mobile overflow and downloads.
+Both the pull-request and GitHub Pages workflows use these checks, including the production browser suite before deployment. Playwright builds and serves the production app. On Linux CI, browser installation uses `--with-deps`.
 
-Test the final deployed URL as well: add/edit a player, vary court count, check a court closing early, generate all four formats, open the share link on a phone and export a JPEG plus HTML. Review `ACCESSIBILITY.md` with assistive technology before claiming conformance.
+Smoke-test the final deployed URL, including add/edit, custom court times, all four formats, both rotation priorities, a share link on a phone and JPEG plus HTML exports. Review `ACCESSIBILITY.md` with assistive technology before claiming conformance.
 
 ## Maintenance rules
 
-Do not relax availability, booking windows, mixed group validity or no-double-booking rules to fill a court. Preferences are intentionally soft. Keep per-round maximum-participation and whole-session coverage regression tests when changing the scheduler. Use `matchPlayerIds()` instead of assuming four people or `teams.flat()` for every match. Kungen stores an ordered `rotation` of three player IDs and no `teams` field. Singles stores two singleton teams; four-person formats store two teams of two.
+Do not relax availability, booking windows, mixed group validity or no-double-booking rules to fill a court. Preferences are intentionally soft. Keep per-round maximum-participation and whole-session coverage regression tests when changing the scheduler. Use `matchPlayerIds()` rather than assuming every match has four players or a `teams` field.
 
-Never trust totals in a share URL: recompute them from validated assignments, including Kungen counts. Keep import/decompression size bounds and HTML escaping. Do not replace semantic schedule text with a canvas-only UI.
+Kungen stores an ordered `rotation` of three player IDs and no `teams` field. Singles stores two singleton teams; four-person formats store two teams of two. Allocated minutes include internal Kungen rests; estimated active time assumes an equal rotation and is not measured playing time.
+
+Never trust totals in a share URL: recompute them from validated assignments. Keep import/decompression size bounds and HTML escaping. Local saved assignments must additionally satisfy private player availability and mixed pairing groups. Do not replace semantic schedule text with a canvas-only UI.
+
+## Historical preparation evidence
+
+`docs/unit-test-results.txt` and `docs/isolated-browser-checks.json` record the original 1.1.0 preparation: 56 Node tests and 52 isolated Chromium checks. Those isolated checks used injected source, in-memory storage and the main-thread fallback, and do not establish a current hosted-browser or WCAG conformance pass.
+

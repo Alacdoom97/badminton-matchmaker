@@ -83,7 +83,7 @@ test('empty and one-player rosters do not crash or invent a game', () => { for (
 test('no booked court in a round leaves everyone resting and reports capacity', () => { const s = fixture(3, 1); s.settings.courts[0].from = '19:00'; const r = generateSchedule(s); invariants(s, r); assert.equal(r.rounds[0].resting.length, 3); assert.equal(capacityReport(s.settings, s.players).rounds[0].minimumResting, 3); });
 test('validation rejects malformed intervals, duplicate names, bad dates and unsupported preferences', () => { const s = fixture(); assert.throws(() => validateSetup({ ...s, settings: { ...s.settings, start: '23:00' } }), /same day/); assert.throws(() => validateSetup({ ...s, settings: { ...s.settings, roundMinutes: 0 } }), /Round length/); assert.throws(() => validateSetup({ ...s, players: [s.players[0], { ...s.players[1], name: s.players[0].name }] }), /unique/); assert.throws(() => validateSetup({ ...s, settings: { ...s.settings, date: '2026-02-30' } }), /valid date/); assert.throws(() => validateSetup({ ...s, players: [{ ...s.players[0], preference: 'invalid' }] }), /preference/); });
 test('last full round stays inside the booking', () => { const s = fixture(8); s.settings.duration = 30; assert.equal(slots(s.settings).length, 1); const r = generateSchedule(s); assert.equal(r.rounds[0].end, 1100); invariants(s, r); });
-test('all headcounts 0-32 and 1-8 courts attain maximum participation', () => { for (let n = 0; n <= 32; n++) for (let c = 1; c <= 8; c++) { const s = fixture(n, c); s.settings.duration = 30; s.players.forEach((p, i) => p.preference = ['singles', 'doubles', 'mixed'][i % 3]); invariants(s, generateSchedule(s)); } });
+test('both rotation priorities attain maximum participation for all headcounts 0-32 and 1-8 courts', () => { for (const rotationPriority of ['preferences', 'playingTime']) for (let n = 0; n <= 32; n++) for (let c = 1; c <= 8; c++) { const s = fixture(n, c); s.settings.rotationPriority = rotationPriority; s.settings.duration = 30; s.players.forEach((p, i) => p.preference = ['singles', 'doubles', 'mixed'][i % 3]); invariants(s, generateSchedule(s)); } });
 test('60 seeded random sessions preserve limits and use every possible place', () => { const rng = random(731); for (let i = 0; i < 60; i++) { const s = fixture(2 + Math.floor(rng() * 35), 1 + Math.floor(rng() * 8)); s.seed = i; s.settings.duration = 60; s.players.forEach(p => { p.preference = ['singles', 'doubles', 'mixed'][Math.floor(rng() * 3)]; p.mixedGroup = ['woman', 'man', 'none'][Math.floor(rng() * 3)]; p.level = 1 + Math.floor(rng() * 5); p.arrival = rng() < .25 ? '18:20' : '18:00'; p.departure = rng() < .25 ? '18:40' : '20:00'; p.skipRounds = rng() < .2 ? [1] : []; }); invariants(s, generateSchedule(s)); } });
 
 // Independent exhaustive oracle for small full-participation sessions.
@@ -111,7 +111,7 @@ function minimumFallbacks(players, courts) {
   }
   return solve(players.map((_, i) => i), courts, players.length % 2);
 }
-test('preferred format count matches exhaustive optimum in 36 small sessions', () => { const rng = random(872); for (let i = 0; i < 36; i++) { const n = 2 + Math.floor(rng() * 7), c = Math.ceil(n / 4) + (i % 2); const s = fixture(n, c); s.settings.duration = 30; s.players.forEach(p => { p.preference = ['singles', 'doubles', 'mixed'][Math.floor(rng() * 3)]; p.mixedGroup = ['woman', 'man', 'none'][Math.floor(rng() * 3)]; }); const round = generateSchedule(s).rounds[0]; const cost = round.matches.reduce((sum, m) => sum + matchPlayerIds(m).filter(id => !preferenceFits(s.players.find(p => p.id === id).preference, m.type)).length, 0); assert.equal(cost, minimumFallbacks(s.players, c), `case ${i}`); } });
+test('both priorities match the exhaustive preferred-format optimum before any Kungen history', () => { const rng = random(872); for (let i = 0; i < 36; i++) { const n = 2 + Math.floor(rng() * 7), c = Math.ceil(n / 4) + (i % 2); const s = fixture(n, c); s.settings.duration = 30; s.players.forEach(p => { p.preference = ['singles', 'doubles', 'mixed'][Math.floor(rng() * 3)]; p.mixedGroup = ['woman', 'man', 'none'][Math.floor(rng() * 3)]; }); for (const rotationPriority of ['preferences', 'playingTime']) { s.settings.rotationPriority = rotationPriority; const round = generateSchedule(s).rounds[0]; const cost = round.matches.reduce((sum, m) => sum + matchPlayerIds(m).filter(id => !preferenceFits(s.players.find(p => p.id === id).preference, m.type)).length, 0); assert.equal(cost, minimumFallbacks(s.players, c), `${rotationPriority} case ${i}`); } } });
 
 test('first-game reservations cover everyone in tight overlapping arrival/opt-out windows', () => {
   // The first four must all play in round 1; round 2 is needed by the last four.
@@ -139,8 +139,14 @@ test('whole-session player coverage matches an independent exhaustive oracle in 
       for(let r=0;r<3;r++)if(left[r]&&isAvailable(s.players[index],rs[r])){const next=[...left];next[r]--;value=Math.max(value,1+best(index+1,next));}
       memo.set(key,value);return value;
     }
-    const result=generateSchedule(s);invariants(s,result);
-    assert.equal(Object.values(result.totals).filter(t=>t.games>0).length,best(0,capacity),`coverage case ${i}`);
+    // Exercise equivalent-availability mixed selection as well as reservation
+    // ties; both priority modes must preserve the independent coverage optimum.
+    if(i%2===0)s.players.forEach(p=>{p.preference='mixed';p.mixedGroup=['woman','man','none'][Math.floor(rng()*3)];});
+    for(const rotationPriority of ['preferences','playingTime']) {
+      s.settings.rotationPriority=rotationPriority;
+      const result=generateSchedule(s);invariants(s,result);
+      assert.equal(Object.values(result.totals).filter(t=>t.games>0).length,best(0,capacity),`${rotationPriority} coverage case ${i}`);
+    }
   }
 });
 
@@ -151,3 +157,42 @@ test('maximum size session: 64 players, 12 courts, 48 rounds', () => {
   const r=generateSchedule(s);invariants(s,r);assert.equal(r.rounds.length,48);
   assert.ok(Object.values(r.totals).every(t=>t.games===36));
 });
+
+test('reshuffling insufficient first-game capacity changes who plays instead of locking roster order', () => {
+  const s = fixture(6, 1); s.settings.duration = 30;
+  const lineups = new Set(), included = new Set();
+  for (let seed = 0; seed < 20; seed++) {
+    const input = { ...s, seed }, result = generateSchedule(input);
+    invariants(input, result);
+    assert.deepEqual(result, generateSchedule(input));
+    const ids = result.rounds[0].matches.flatMap(matchPlayerIds).sort();
+    lineups.add(ids.join(',')); ids.forEach(id => included.add(id));
+  }
+  assert.ok(lineups.size > 1);
+  assert.equal(included.size, 6);
+});
+
+test('equivalent first-game reservations use a feasible mixed group before format fallback', () => {
+  const s = fixture(6, 1); s.settings.duration = 30;
+  s.players.forEach((p, i) => { p.preference = 'mixed'; p.mixedGroup = i < 4 ? 'woman' : 'man'; });
+  for (let seed = 0; seed < 16; seed++) {
+    const input = { ...s, seed }, result = generateSchedule(input);
+    invariants(input, result);
+    assert.equal(result.rounds[0].matches[0].type, 'mixed');
+    assert.equal(Object.values(result.totals).filter(p => p.games).length, 4);
+  }
+});
+
+test('estimated playing-time priority rotates Kungen rests across preference pools', () => {
+  const s = fixture(7, 2);
+  s.players.forEach((p, i) => { p.preference = i < 3 ? 'singles' : 'doubles'; p.mixedGroup = 'none'; });
+  const preferred = generateSchedule(s); invariants(s, preferred);
+  assert.deepEqual(Object.values(preferred.totals).map(p => p.kungen), [6, 6, 6, 0, 0, 0, 0]);
+  s.settings.rotationPriority = 'playingTime';
+  const rotated = generateSchedule(s); invariants(s, rotated);
+  const rests = Object.values(rotated.totals).map(p => p.kungen);
+  assert.ok(Math.max(...rests) - Math.min(...rests) <= 1);
+  assert.ok(Object.values(rotated.totals).every(p => p.games === 6));
+  assert.deepEqual(rotated, generateSchedule(s));
+});
+

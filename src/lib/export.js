@@ -56,90 +56,166 @@ function wrap(ctx,text,maxWidth) {
   if(line)lines.push(line);
   return lines.length?lines:[''];
 }
-/** Crisp 2x canvas. Measured blocks adapt to 1v1, 2v2 and three-player rotations. */
-export async function roundJPEG(snapshot, index) {
+// Bound bitmap memory independently of court count and wrapped player names.
+export const MAX_IMAGE_PIXELS = 8_000_000;
+export const MAX_IMAGE_DIMENSION = 8192;
+export const MAX_PACK_IMAGE_BYTES = 32_000_000;
+function cancelled() { return new DOMException('Export cancelled.', 'AbortError'); }
+function checkCancelled(signal) { if (signal?.aborted) throw cancelled(); }
+function withCancellation(promise, signal) {
+  if (!signal) return promise;
+  return new Promise((resolve, reject) => {
+    const cleanup = () => signal.removeEventListener('abort', abort);
+    const abort = () => { cleanup(); reject(cancelled()); };
+    signal.addEventListener('abort', abort, { once: true });
+    Promise.resolve(promise).then(value => { cleanup(); resolve(value); }, error => { cleanup(); reject(error); });
+    if (signal.aborted) abort();
+  });
+}
+/** Measured blocks keep every name; large layouts use a smaller bitmap scale. */
+export async function roundJPEG(snapshot, index, { signal } = {}) {
   const r = snapshot.schedule.rounds[index];
   if (!r) throw new Error('Choose a round to export.');
-  if (document.fonts?.ready) await document.fonts.ready;
+  checkCancelled(signal);
+  if (document.fonts?.ready) await withCancellation(document.fonts.ready, signal);
+  checkCancelled(signal);
   const { names, courts } = maps(snapshot), s = snapshot.settings;
-  const canvas = document.createElement('canvas'), ctx = canvas.getContext('2d');
-  if (!ctx) throw new Error('Your browser could not create an image. Download the HTML schedule instead.');
-  const width = 1400, pad = 64, gap = 28, cardW = (width - pad * 2 - gap) / 2;
-  const navy = '#122d4b', muted = '#4a6078', blue = '#174dc6';
-  function block(text, font, lineHeight, color = navy, after = 10, max = cardW - 48) {
-    ctx.font = font;
-    return { lines: wrap(ctx, text, max), font, lineHeight, color, after };
-  }
-  const blockHeight = b => b.lines.length * b.lineHeight + b.after;
-  const cards = s.courts.map(c => {
-    const m = r.matches.find(m => m.courtId === c.id);
-    const blocks = [block(courts[c.id], '700 29px Arial, sans-serif', 36), block(m ? FORMAT_NAMES[m.type] : 'No match', '600 22px Arial, sans-serif', 29, blue, 20)];
-    if (m) {
-      for (const section of matchSections(m, names)) {
-        blocks.push(block(section.label.toUpperCase(), '700 17px Arial, sans-serif', 24, muted, 8));
-        section.names.forEach(name => blocks.push(block(name, '600 25px Arial, sans-serif', 34, navy, 6)));
-        blocks.at(-1).after = 20;
-      }
-      if (m.type === 'kungen') {
-        blocks.push(block('1 vs 2, then 2 vs 3, then 3 vs 1. Repeat.', '600 21px Arial, sans-serif', 29, navy, 10));
-        blocks.push(block('Switch after each rally or short game as agreed. Two play; one rests within the rotation.', '21px Arial, sans-serif', 29, muted, 0));
-      }
-    } else blocks.push(block(r.closedCourts.includes(c.id) ? 'Court unavailable for this round.' : 'No additional match scheduled.', '24px Arial, sans-serif', 34));
-    return { blocks, height: Math.max(220, 48 + blocks.reduce((n, b) => n + blockHeight(b), 0)) };
-  });
-  const rows = [];
-  for (let i = 0; i < cards.length; i += 2) rows.push({ cards: cards.slice(i, i + 2), height: Math.max(...cards.slice(i, i + 2).map(c => c.height)) });
-  const title = block(s.title, '700 42px Arial, sans-serif', 50, '#ffffff', 14, width - pad * 2);
-  const detail = block(`${prettyDate(s.date)} | ${s.venue}`, '24px Arial, sans-serif', 32, '#ffffff', 16, width - pad * 2);
-  const resting = block(`Resting (outside court groups): ${r.resting.map(id => names[id]).join(', ') || 'Nobody'}`, '24px Arial, sans-serif', 34, navy, 16, width - pad * 2 - 48);
-  const unavailable = block(`Unavailable / opted out: ${r.unavailable.map(id => names[id]).join(', ') || 'Nobody'}`, '24px Arial, sans-serif', 34, navy, 0, width - pad * 2 - 48);
-  const headerH = 164 + blockHeight(title) + blockHeight(detail);
-  const bottomH = 48 + blockHeight(resting) + blockHeight(unavailable);
-  const height = headerH + rows.reduce((n, row) => n + row.height + gap, 0) + bottomH + 96;
-  canvas.width = width * 2; canvas.height = height * 2; ctx.scale(2, 2);
-  ctx.textBaseline = 'top';
-  ctx.fillStyle = '#f4f6fa'; ctx.fillRect(0, 0, width, height);
-  ctx.fillStyle = navy; ctx.fillRect(0, 0, width, headerH - 24);
-  function draw(b, x, y) {
-    ctx.font = b.font; ctx.fillStyle = b.color;
-    b.lines.forEach((line, i) => ctx.fillText(line, x, y + i * b.lineHeight));
-    return y + blockHeight(b);
-  }
-  ctx.fillStyle = '#ffffff'; ctx.font = '700 19px Arial, sans-serif'; ctx.fillText('AURA MATCH / ON COURT', pad, 30);
-  let hy = draw(title, pad, 78); hy = draw(detail, pad, hy);
-  ctx.fillStyle = '#ffffff'; ctx.font = '700 24px Arial, sans-serif';
-  ctx.fillText(`ROUND ${index + 1} OF ${snapshot.schedule.rounds.length}  |  ${clock(r.start)}-${clock(r.end)}  |  Europe/Stockholm`, pad, hy + 6);
-  let y = headerH;
-  for (const row of rows) {
-    row.cards.forEach((card, col) => {
-      const x = pad + col * (cardW + gap);
-      ctx.fillStyle = '#ffffff'; ctx.fillRect(x, y, cardW, row.height);
-      ctx.strokeStyle = '#8393a8'; ctx.lineWidth = 1; ctx.strokeRect(x, y, cardW, row.height);
-      let cy = y + 24;
-      for (const b of card.blocks) cy = draw(b, x + 24, cy);
+  const canvas = document.createElement('canvas');
+  try {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Your browser could not create an image. Download the HTML schedule instead.');
+    const width = 1400, pad = 64, gap = 28, cardW = (width - pad * 2 - gap) / 2;
+    const navy = '#122d4b', muted = '#4a6078', blue = '#174dc6';
+    function block(text, font, lineHeight, color = navy, after = 10, max = cardW - 48) {
+      ctx.font = font;
+      return { lines: wrap(ctx, text, max), font, lineHeight, color, after };
+    }
+    const blockHeight = b => b.lines.length * b.lineHeight + b.after;
+    const cards = s.courts.map(c => {
+      const m = r.matches.find(m => m.courtId === c.id);
+      const blocks = [block(courts[c.id], '700 29px Arial, sans-serif', 36), block(m ? FORMAT_NAMES[m.type] : 'No match', '600 22px Arial, sans-serif', 29, blue, 20)];
+      if (m) {
+        for (const section of matchSections(m, names)) {
+          blocks.push(block(section.label.toUpperCase(), '700 17px Arial, sans-serif', 24, muted, 8));
+          section.names.forEach(name => blocks.push(block(name, '600 25px Arial, sans-serif', 34, navy, 6)));
+          blocks.at(-1).after = 20;
+        }
+        if (m.type === 'kungen') {
+          blocks.push(block('1 vs 2, then 2 vs 3, then 3 vs 1. Repeat.', '600 21px Arial, sans-serif', 29, navy, 10));
+          blocks.push(block('Switch after each rally or short game as agreed. Two play; one rests within the rotation.', '21px Arial, sans-serif', 29, muted, 0));
+        }
+      } else blocks.push(block(r.closedCourts.includes(c.id) ? 'Court unavailable for this round.' : 'No additional match scheduled.', '24px Arial, sans-serif', 34));
+      return { blocks, height: Math.max(220, 48 + blocks.reduce((n, b) => n + blockHeight(b), 0)) };
     });
-    y += row.height + gap;
+    const rows = [];
+    for (let i = 0; i < cards.length; i += 2) rows.push({ cards: cards.slice(i, i + 2), height: Math.max(...cards.slice(i, i + 2).map(c => c.height)) });
+    const title = block(s.title, '700 42px Arial, sans-serif', 50, '#ffffff', 14, width - pad * 2);
+    const detail = block(`${prettyDate(s.date)} | ${s.venue}`, '24px Arial, sans-serif', 32, '#ffffff', 16, width - pad * 2);
+    const resting = block(`Resting (outside court groups): ${r.resting.map(id => names[id]).join(', ') || 'Nobody'}`, '24px Arial, sans-serif', 34, navy, 16, width - pad * 2 - 48);
+    const unavailable = block(`Unavailable / opted out: ${r.unavailable.map(id => names[id]).join(', ') || 'Nobody'}`, '24px Arial, sans-serif', 34, navy, 0, width - pad * 2 - 48);
+    const headerH = 164 + blockHeight(title) + blockHeight(detail);
+    const bottomH = 48 + blockHeight(resting) + blockHeight(unavailable);
+    const height = headerH + rows.reduce((n, row) => n + row.height + gap, 0) + bottomH + 96;
+    const scale = Math.min(2, Math.sqrt(MAX_IMAGE_PIXELS / (width * height)), MAX_IMAGE_DIMENSION / Math.max(width, height));
+    canvas.width = Math.max(1, Math.floor(width * scale));
+    canvas.height = Math.max(1, Math.floor(height * scale));
+    ctx.scale(canvas.width / width, canvas.height / height);
+    ctx.textBaseline = 'top';
+    ctx.fillStyle = '#f4f6fa'; ctx.fillRect(0, 0, width, height);
+    ctx.fillStyle = navy; ctx.fillRect(0, 0, width, headerH - 24);
+    function draw(b, x, y) {
+      ctx.font = b.font; ctx.fillStyle = b.color;
+      b.lines.forEach((line, i) => ctx.fillText(line, x, y + i * b.lineHeight));
+      return y + blockHeight(b);
+    }
+    ctx.fillStyle = '#ffffff'; ctx.font = '700 19px Arial, sans-serif'; ctx.fillText('AURA MATCH / ON COURT', pad, 30);
+    let hy = draw(title, pad, 78); hy = draw(detail, pad, hy);
+    ctx.fillStyle = '#ffffff'; ctx.font = '700 24px Arial, sans-serif';
+    ctx.fillText(`ROUND ${index + 1} OF ${snapshot.schedule.rounds.length}  |  ${clock(r.start)}-${clock(r.end)}  |  Europe/Stockholm`, pad, hy + 6);
+    let y = headerH;
+    for (const row of rows) {
+      row.cards.forEach((card, col) => {
+        const x = pad + col * (cardW + gap);
+        ctx.fillStyle = '#ffffff'; ctx.fillRect(x, y, cardW, row.height);
+        ctx.strokeStyle = '#8393a8'; ctx.lineWidth = 1; ctx.strokeRect(x, y, cardW, row.height);
+        let cy = y + 24;
+        for (const b of card.blocks) cy = draw(b, x + 24, cy);
+      });
+      y += row.height + gap;
+    }
+    ctx.fillStyle = '#e7edf6'; ctx.fillRect(pad, y, width - pad * 2, bottomH);
+    let by = draw(resting, pad + 24, y + 24); draw(unavailable, pad + 24, by);
+    ctx.fillStyle = muted; ctx.font = '20px Arial, sans-serif';
+    ctx.fillText('Share the matching HTML or text schedule alongside this image for accessibility.', pad, height - 48);
+    checkCancelled(signal);
+    const blob = await withCancellation(new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.93)), signal);
+    checkCancelled(signal);
+    if (!blob) throw new Error('Image export failed. Try the HTML schedule instead.');
+    return blob;
+  } finally {
+    canvas.width = 1; canvas.height = 1;
   }
-  ctx.fillStyle = '#e7edf6'; ctx.fillRect(pad, y, width - pad * 2, bottomH);
-  let by = draw(resting, pad + 24, y + 24); draw(unavailable, pad + 24, by);
-  ctx.fillStyle = muted; ctx.font = '20px Arial, sans-serif';
-  ctx.fillText('Share the matching HTML or text schedule alongside this image for accessibility.', pad, height - 48);
-  const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.93));
-  canvas.width = 1; canvas.height = 1;
-  if (!blob) throw new Error('Image export failed. Try the HTML schedule instead.');
-  return blob;
 }
-export async function exportPack(snapshot,onProgress=()=>{}) {
-  const {default:JSZip}=await import('jszip');
-  const zip=new JSZip();
-  zip.file('schedule.html',scheduleHTML(snapshot));zip.file('schedule.txt',scheduleText(snapshot));
-  zip.file('READ-ME.txt','Share schedule.html or schedule.txt together with the JPEG images. The HTML file works offline without JavaScript. A JPEG alone is not screen-reader accessible. Names and session details are included; private profile fields are omitted.');
-  for(let i=0;i<snapshot.schedule.rounds.length;i++){
-    onProgress(`Creating image ${i+1} of ${snapshot.schedule.rounds.length}...`);
-    const blob=await roundJPEG(snapshot,i);
-    zip.file(`round-${String(i+1).padStart(2,'0')}.jpg`,await blob.arrayBuffer());
-    await new Promise(resolve=>setTimeout(resolve,0));
+// Pause the ZIP stream on abort rather than leaving a discarded packaging job running.
+function packBlob(zip, signal) {
+  checkCancelled(signal);
+  const stream = zip.generateInternalStream({ type: 'uint8array', compression: 'STORE', streamFiles: true });
+  return new Promise((resolve, reject) => {
+    let chunks = [], finished = false;
+    const cleanup = () => signal?.removeEventListener('abort', abort);
+    const fail = error => {
+      if (finished) return;
+      finished = true; stream.pause(); chunks = []; cleanup(); reject(error);
+    };
+    const abort = () => fail(cancelled());
+    signal?.addEventListener('abort', abort, { once: true });
+    stream.on('data', chunk => {
+      // JSZip queues resume(): an abort may pause before that queued job runs.
+      // Pause again on its first late chunk so cancellation also stops that job.
+      if (finished || signal?.aborted) { stream.pause(); return; }
+      chunks.push(chunk);
+    });
+    stream.on('error', fail);
+    stream.on('end', () => {
+      if (finished) return;
+      try {
+        const blob = new Blob(chunks, { type: 'application/zip' });
+        finished = true; cleanup(); chunks = []; resolve(blob);
+      } catch (error) { fail(error); }
+    });
+    if (signal?.aborted) abort(); else stream.resume();
+  });
+}
+export async function exportPack(snapshot, onProgress = () => {}, { roundIndices, signal } = {}) {
+  checkCancelled(signal);
+  const indices = roundIndices ?? snapshot.schedule.rounds.map((_, index) => index);
+  if (!Array.isArray(indices) || !indices.length || new Set(indices).size !== indices.length || indices.some(i => !Number.isInteger(i) || i < 0 || i >= snapshot.schedule.rounds.length)) {
+    throw new Error('Choose at least one valid round to include as an image.');
   }
-  onProgress('Packaging your schedule...');
-  return zip.generateAsync({type:'blob',compression:'STORE'});
+  const { default: JSZip } = await withCancellation(import('jszip'), signal);
+  checkCancelled(signal);
+  const zip = new JSZip();
+  try {
+    zip.file('schedule.html', scheduleHTML(snapshot)); zip.file('schedule.txt', scheduleText(snapshot));
+    zip.file('READ-ME.txt', 'The HTML and text contain the full schedule. JPEGs contain the rounds selected at export. Share schedule.html or schedule.txt together with the JPEG images. The HTML file works offline without JavaScript. A JPEG alone is not screen-reader accessible. Names and session details are included; private profile fields are omitted.');
+    let imageBytes = 0;
+    for (let position = 0; position < indices.length; position++) {
+      checkCancelled(signal);
+      const index = indices[position];
+      onProgress(`Creating image ${position + 1} of ${indices.length} (round ${index + 1})...`);
+      const blob = await roundJPEG(snapshot, index, { signal });
+      imageBytes += blob.size;
+      if (imageBytes > MAX_PACK_IMAGE_BYTES) throw new Error('These images are too large for one download. Choose fewer rounds or download the HTML schedule.');
+      const bytes = await withCancellation(blob.arrayBuffer(), signal);
+      checkCancelled(signal);
+      zip.file(`round-${String(index + 1).padStart(2, '0')}.jpg`, bytes);
+      await withCancellation(new Promise(resolve => setTimeout(resolve, 0)), signal);
+    }
+    checkCancelled(signal);
+    onProgress('Packaging your schedule...');
+    return await packBlob(zip, signal);
+  } finally {
+    // Drop references to image buffers after success, cancellation or failure.
+    Object.keys(zip.files).forEach(name => zip.remove(name));
+  }
 }

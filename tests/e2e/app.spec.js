@@ -166,8 +166,10 @@ test('capacity warning updates immediately for 22 players on five versus six cou
   await expect(warning).toContainText('22 available players, 5 courts: room for 20.');
   await expect(warning).toContainText('2 players must sit out each round');
   await page.getByLabel('Courts booked', { exact: true }).fill('6');
+  await page.getByLabel('Courts booked', { exact: true }).blur();
   await expect(warning).toHaveCount(0);
   await page.getByLabel('Courts booked', { exact: true }).fill('5');
+  await page.getByLabel('Courts booked', { exact: true }).blur();
   await expect(warning).toBeVisible();
   await generate(page);
   await expect(page.locator('.resting-players li')).toHaveCount(2);
@@ -222,3 +224,4 @@ test('Kungen is preserved in shared snapshots and all exported formats', async (
     expect(await file.failure()).toBeNull();
   }
 });
+

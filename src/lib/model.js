@@ -58,6 +58,40 @@ function integer(value, min, max, label) {
 function time(value, label) { if (!Number.isFinite(minutes(value))) fail(`${label} must be a valid 24-hour time.`); return value; }
 function record(v, label) { if (!v || typeof v !== 'object' || Array.isArray(v)) fail(`${label} is invalid.`); }
 function unique(values, label) { if (new Set(values).size !== values.length) fail(`${label} must be unique.`); }
+
+const stockholmOffset = new Intl.DateTimeFormat('en', { timeZone: 'Europe/Stockholm', timeZoneName: 'longOffset' });
+let clockChangeDate, clockChangeWindows;
+function offsetAt(timestamp) {
+  const name = stockholmOffset.formatToParts(timestamp).find(part => part.type === 'timeZoneName').value;
+  const parts = /^GMT(?:([+-])(\d{2}):(\d{2})(?::(\d{2}))?)?$/.exec(name);
+  if (!parts) fail('The Stockholm time zone could not be read in this browser.');
+  return parts[1] ? (parts[1] === '-' ? -1 : 1) * (Number(parts[2]) * 3600 + Number(parts[3]) * 60 + Number(parts[4] || 0)) * 1000 : 0;
+}
+function validateClockWindow(date, begin, end) {
+  if (clockChangeDate !== date) {
+    const day = Date.parse(`${date}T00:00:00Z`), windows = [];
+    // Inspect UTC instants surrounding this local date, then locate each change.
+    // This uses the browser's time-zone data rather than hard-coded DST dates.
+    let previous = day - 12 * 3600000, before = offsetAt(previous);
+    for (let next = previous + 6 * 3600000; next <= day + 36 * 3600000; next += 6 * 3600000) {
+      const after = offsetAt(next);
+      if (before !== after) {
+        let low = previous, high = next;
+        while (high - low > 1) {
+          const middle = Math.floor((low + high) / 2);
+          if (offsetAt(middle) === before) low = middle; else high = middle;
+        }
+        windows.push([(high + Math.min(before, after) - day) / 60000, (high + Math.max(before, after) - day) / 60000]);
+      }
+      previous = next; before = after;
+    }
+    clockChangeDate = date; clockChangeWindows = windows;
+  }
+  // The end boundary must also denote a unique, existing local time.
+  if (clockChangeWindows.some(([from, until]) => begin < until && end >= from)) {
+    fail('This session overlaps a daylight-saving clock change in Europe/Stockholm. Choose a time outside the skipped or repeated hour.');
+  }
+}
 export function validateSettings(raw) {
   record(raw, 'Session');
   const s = {
@@ -65,11 +99,14 @@ export function validateSettings(raw) {
     date: text(raw.date, 10, 10, 'Date'), start: time(raw.start, 'Start time'),
     duration: integer(raw.duration, 30, 480, 'Session duration'),
     roundMinutes: integer(raw.roundMinutes, 10, 60, 'Round length'),
-    breakMinutes: integer(raw.breakMinutes, 0, 15, 'Changeover'), courts: [],
+    breakMinutes: integer(raw.breakMinutes, 0, 15, 'Changeover'),
+    rotationPriority: raw.rotationPriority ?? 'preferences', courts: [],
   };
   if (!/^\d{4}-\d{2}-\d{2}$/.test(s.date) || !Number.isFinite(Date.parse(s.date)) || new Date(`${s.date}T12:00:00Z`).toISOString().slice(0, 10) !== s.date) fail('Choose a valid date.');
   const end = minutes(s.start) + s.duration;
   if (end > 1439) fail('Sessions must finish by 23:59 on the same day. Start earlier or reduce the duration.');
+  validateClockWindow(s.date, minutes(s.start), end);
+  if (!['preferences', 'playingTime'].includes(s.rotationPriority)) fail('Choose a valid rotation priority.');
   if (s.roundMinutes > s.duration) fail('A round cannot be longer than the session.');
   if (!Array.isArray(raw.courts) || raw.courts.length < 1 || raw.courts.length > LIMITS.courts) fail('Choose 1-12 courts.');
   s.courts = raw.courts.map(c => {
@@ -138,3 +175,4 @@ export function capacityReport(settings, players) {
   const peak = affected.reduce((best, r) => !best || r.minimumResting > best.minimumResting ? r : best, null);
   return { rounds, affected, peak, roster: players.length, maximum: settings.courts.length * 4 };
 }
+
