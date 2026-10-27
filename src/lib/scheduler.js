@@ -67,7 +67,7 @@ function pairPools(pools, kungen, partners, opponents, stats, rng) {
     if (kungen) {
       // Prefer players with fewer internal Kungen rests; randomise equal counts.
       singles.sort((a, b) => stats.get(a.id).kungen - stats.get(b.id).kungen);
-      const trio = singles.splice(0, 3);
+      const trio = pools.kungen.length ? pools.kungen : singles.splice(0, 3);
       for (let i = 0; i < 3; i++) for (let j = i + 1; j < 3; j++) {
         cost += count(opponents, trio[i].id, trio[j].id) + Math.abs(trio[i].level - trio[j].level);
       }
@@ -97,13 +97,16 @@ function pairPools(pools, kungen, partners, opponents, stats, rng) {
  * One Kungen group replaces a singles court for an odd selected headcount.
  * Even headcounts use ordinary singles/doubles, not unnecessary Kungen rests.
  */
-function arrange(selected, courtCount, partners, opponents, stats, rng) {
+function arrange(selected, courtCount, partners, opponents, stats, rng, rotationPriority) {
   if (selected.length < 2 || !courtCount) return [];
   const n = selected.length, kungen = n % 2;
   const women = selected.filter(p => p.mixedGroup === 'woman').length;
   const men = selected.filter(p => p.mixedGroup === 'man').length;
-  // One mismatch outweighs every possible fairness tie-break combined.
+  // Default: one mismatch outweighs every fairness tie-break combined. The
+  // optional time priority puts rotating Kungen rests ahead of format requests.
   const mismatchWeight = 100_000, forbidden = 1_000_000_000;
+  const rotateKungen = rotationPriority === 'playingTime';
+  const rotationWeight = mismatchWeight * (n + 1);
   const jitter = new Map(selected.map(p => [p.id, rng()]));
   let best = null;
   for (let fours = 0; fours <= Math.floor((n - 3 * kungen) / 4); fours++) {
@@ -111,19 +114,21 @@ function arrange(selected, courtCount, partners, opponents, stats, rng) {
     if (singles < 0 || singles + fours + kungen > courtCount) continue;
     for (let mixed = 0; mixed <= Math.min(fours, Math.floor(women / 2), Math.floor(men / 2)); mixed++) {
       const roles = [
-        ...Array(singles * 2 + kungen * 3).fill('singles'),
+        ...Array(singles * 2 + (rotateKungen ? 0 : kungen * 3)).fill('singles'),
+        ...Array(rotateKungen ? kungen * 3 : 0).fill('kungen'),
         ...Array((fours - mixed) * 4).fill('doubles'),
         ...Array(mixed * 2).fill('woman'), ...Array(mixed * 2).fill('man'),
       ];
       const costs = selected.map(p => roles.map(role => {
         const mixedRole = role === 'woman' || role === 'man';
         if (mixedRole && p.mixedGroup !== role) return forbidden;
-        const fallback = p.preference !== (mixedRole ? 'mixed' : role);
-        return fallback ? mismatchWeight + stats.get(p.id).fallbacks * 10 + jitter.get(p.id) : 0;
+        const fallback = !preferenceFits(p.preference, mixedRole ? 'mixed' : role);
+        return (fallback ? mismatchWeight + stats.get(p.id).fallbacks * 10 + jitter.get(p.id) : 0)
+          + (role === 'kungen' ? stats.get(p.id).kungen * rotationWeight : 0);
       }));
       const assignment = assign(costs);
       if (assignment.some((row, col) => costs[row][col] >= forbidden)) continue;
-      const pools = { singles: [], doubles: [], woman: [], man: [] };
+      const pools = { singles: [], kungen: [], doubles: [], woman: [], man: [] };
       let preferenceCost = 0;
       assignment.forEach((row, col) => { pools[roles[col]].push(selected[row]); preferenceCost += costs[row][col]; });
       // Avoid expensive partner search for strictly worse preference assignments.
@@ -144,7 +149,7 @@ function arrange(selected, courtCount, partners, opponents, stats, rng) {
  * reservation to a later round to make room for someone with fewer options.
  * Already-played people do not consume their later reservation.
  */
-function reserveFirstGames(settings, players, rounds) {
+function reserveFirstGames(settings, players, rounds, rng) {
   const candidates = rounds.map(slot => players.filter(p => isAvailable(p, slot)));
   const capacities = rounds.map((slot, i) => {
     const maximum = Math.min(candidates[i].length, activeCourts(settings, slot).length * 4);
@@ -163,9 +168,45 @@ function reserveFirstGames(settings, players, rounds) {
     }
     return false;
   }
-  const ordered = [...players].sort((a, b) => choices.get(a.id).length - choices.get(b.id).length);
+  const ordered = shuffle(players, rng).sort((a, b) => choices.get(a.id).length - choices.get(b.id).length);
   for (const p of ordered) place(p.id, new Set());
   return new Map(owners.flatMap((ids, r) => ids.map(id => [id, r])));
+}
+
+/** Equivalent availability/history permits exchanging reservation identities
+ * without changing maximum first-game coverage. For an all-Mixed pool, prefer
+ * balanced pairing groups before accepting avoidable non-mixed fallbacks.
+ * Other mixed-preference combinations retain the ordinary priority order.
+ */
+function improveMixedSelection(selected, ranked, eligibility, reservations, stats, roundIndex) {
+  if (!selected.length || selected.some(p => p.preference !== 'mixed')) return selected;
+  const mixedPlaces = 2 * Math.floor((selected.length - 3 * (selected.length % 2)) / 4);
+  if (!mixedPlaces) return selected;
+  const score = group => {
+    const women = Math.min(mixedPlaces, group.filter(p => p.mixedGroup === 'woman').length);
+    const men = Math.min(mixedPlaces, group.filter(p => p.mixedGroup === 'man').length);
+    return Math.min(women, men) * (selected.length + 1) + women + men;
+  };
+  const equivalent = (a, b) => ['games', 'eligible', 'waiting', 'kungen', 'fallbacks'].every(key => stats.get(a.id)[key] === stats.get(b.id)[key])
+    && eligibility.get(a.id).slice(roundIndex).every((value, i) => value === eligibility.get(b.id)[roundIndex + i]);
+  let current = [...selected], value = score(current);
+  for (;;) {
+    let improvement;
+    const ids = new Set(current.map(p => p.id));
+    for (const incoming of ranked) if (!ids.has(incoming.id) && incoming.preference === 'mixed') {
+      for (let i = 0; i < current.length; i++) if (equivalent(current[i], incoming)) {
+        const candidate = [...current]; candidate[i] = incoming;
+        const next = score(candidate);
+        if (next > (improvement?.value ?? value)) improvement = { candidate, value: next, incoming, outgoing: current[i] };
+      }
+    }
+    if (!improvement) return current;
+    const { incoming, outgoing } = improvement;
+    const outgoingRound = reservations.get(outgoing.id), incomingRound = reservations.get(incoming.id);
+    if (incomingRound === undefined) reservations.delete(outgoing.id); else reservations.set(outgoing.id, incomingRound);
+    if (outgoingRound === undefined) reservations.delete(incoming.id); else reservations.set(incoming.id, outgoingRound);
+    current = improvement.candidate; value = improvement.value;
+  }
 }
 
 /**
@@ -182,7 +223,7 @@ export function generateSchedule(input) {
   const stats = new Map(players.map(p => [p.id, { games: 0, eligible: 0, waiting: 0, kungen: 0, fallbacks: 0 }]));
   const partners = new Map(), opponents = new Map(), byId = new Map(players.map(p => [p.id, p]));
   const eligibility = new Map(players.map(p => [p.id, rounds.map(r => isAvailable(p, r) && activeCourts(settings, r).length > 0)]));
-  const reservations = reserveFirstGames(settings, players, rounds);
+  const reservations = reserveFirstGames(settings, players, rounds, rng);
   const result = [];
   for (const slot of rounds) {
     const courts = activeCourts(settings, slot), available = players.filter(p => isAvailable(p, slot));
@@ -195,13 +236,14 @@ export function generateSchedule(input) {
       // First games and short availability windows precede repeat games. Then
       // balance participation relative to eligibility, with a waiting boost.
       const score = (s.games === 0 ? 10000 + 1000 / Math.max(1, remaining) : 0)
-        + 100 * (1 - s.games / Math.max(1, s.eligible)) + s.waiting * 5
+        + 100 * (1 - (s.games - (settings.rotationPriority === 'playingTime' ? s.kungen / 3 : 0)) / Math.max(1, s.eligible)) + s.waiting * 5
         + 5 / Math.max(1, remaining) + rng() * 0.1;
       return [p.id, score];
     }));
     const reservedNow = p => reservations.get(p.id) === slot.index && stats.get(p.id).games === 0 ? 1 : 0;
-    const selected = [...available].sort((a, b) => reservedNow(b) - reservedNow(a) || priority.get(b.id) - priority.get(a.id)).slice(0, target === 1 ? 0 : target);
-    const matches = arrange(selected, courts.length, partners, opponents, stats, rng).map((m, i) => ({ courtId: courts[i].id, ...m }));
+    const ranked = [...available].sort((a, b) => reservedNow(b) - reservedNow(a) || priority.get(b.id) - priority.get(a.id));
+    const selected = improveMixedSelection(ranked.slice(0, target === 1 ? 0 : target), ranked, eligibility, reservations, stats, slot.index);
+    const matches = arrange(selected, courts.length, partners, opponents, stats, rng, settings.rotationPriority).map((m, i) => ({ courtId: courts[i].id, ...m }));
     const playing = new Set(matches.flatMap(matchPlayerIds));
     for (const match of matches) {
       const ids = matchPlayerIds(match);
@@ -245,3 +287,4 @@ export function generateSchedule(input) {
   if (unused > 0) warnings.push(`${unused} minutes remain after the final full round. Partial rounds are not scheduled.`);
   return { rounds: result, warnings, totals: Object.fromEntries([...stats].map(([id, s]) => [id, { games: s.games, eligible: s.eligible, kungen: s.kungen }])) };
 }
+

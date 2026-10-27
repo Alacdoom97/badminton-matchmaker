@@ -7,21 +7,21 @@ A complete React badminton session planner with flexible **singles, doubles and 
 Use Node.js 22.12 or newer in the Node 22 line, and npm. No API keys, database, accounts or environment variables are required by the app.
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
 Open the local address printed by Vite. The first visit loads fictional example players. Choose **Start fresh** for your group, or import one of the fictional `examples/*.json` setups.
 
 ```bash
-npm test                 # 56 scheduler, validation, sharing, export and contrast tests
+npm test                 # scheduler, validation, workspace, sharing, export and contrast tests
 npm run build            # production website in dist/
 npm run preview          # serve the production build locally
 npx playwright install chromium
 npm run test:e2e          # actual served-browser and axe checks
 ```
 
-Commit the `package-lock.json` created by `npm install`. The workflows use `npm ci` when the lockfile exists, otherwise `npm install`. The preparation environment could not access the npm registry, so no lockfile or successful Vite build is claimed for this delivery. See `TESTING.md` for verified scope.
+The committed `package-lock.json` makes local and CI installations reproducible. Both pull requests and GitHub Pages releases run the unit tests, production build and browser checks. See `TESTING.md` for verified scope.
 
 ## What changed
 
@@ -60,7 +60,7 @@ Parity and capacity use the **players available for each complete round**, not j
 
 Add, edit, search and remove up to 64 players; record optional gender and playing level; configure 1-12 courts, a 0.5-8 hour session and up to 48 complete rounds. Configure individual arrival/departure times, round opt-outs and court booking times. View court cards or semantic all-round tables. Save/import an editable JSON backup, share a read-only schedule link, or download JPEG, HTML, text and ZIP exports.
 
-All times use the venue's Europe/Stockholm clock. Sessions finish on the same day. Players and courts must be available for the entire round; leftover time too short for another round is reported. Timing changes clear round opt-outs and move full-session player/court times to the new booking while retaining custom times. Any setup change clears the generated schedule to prevent stale assignments.
+All times use the venue's Europe/Stockholm clock. Sessions finish on the same day. Sessions overlapping the skipped or repeated hour during a daylight-saving clock change are rejected. Players and courts must be available for the entire round; leftover time too short for another round is reported. Start time, duration and court count are drafts until you leave the field or press Enter, so clearing a field while typing does not delete existing bookings. Committed timing changes clear round opt-outs and move full-session player/court times to the new booking while retaining custom times. Any setup change clears the generated schedule to prevent stale assignments.
 
 ## Scheduler priorities
 
@@ -69,6 +69,8 @@ The scheduler first makes a maximum-cardinality first-game reservation across th
 Every round includes the maximum possible headcount, `min(available players, 4 * available courts)`, except a single isolated participant cannot play alone. First-game reservations are respected; remaining places use playing history, waiting time and future availability to rotate rests.
 
 For the selected players, the planner enumerates valid two-, three- and four-person court layouts and uses minimum-cost role assignment to maximise the number receiving a preferred format. Valid mixed pairing groups remain mandatory. Then a seeded pairing heuristic aims to reduce repeat partners/opponents and balance team levels. Those latter goals and equal playing time are best-effort, not globally optimal guarantees. A court can remain unused when everyone already fits into their preferred formats on fewer courts.
+
+The default **Preferred formats** rotation priority retains that preference ordering. Choose **Estimated playing time** to rotate Kungen's internal rests ahead of format requests and count a Kungen round as two-thirds active time when selecting players. This estimate assumes equal rotation; it is not measured playing time. Both modes retain maximum participation, first-game coverage and all availability limits. Equal-priority first-game reservations use the shuffle seed rather than roster order. Equivalent all-Mixed players can exchange reservations to avoid a needless non-mixed fallback.
 
 Availability and booking times, no double booking and valid mixed groups are hard limits. Preferences are soft. Reshuffling changes the seed, not those limits. Generation normally runs in a module Web Worker; a main-thread fallback exists when Worker is absent.
 
@@ -83,6 +85,10 @@ Shared schedules include names, match assignments, resting/unavailable status an
 The website is local-first, not live collaboration. Each browser has its own editable planner. A share link is a compressed, fixed snapshot in the URL fragment; send a new link after changes. Anyone with the link can read and forward it. Compression is not encryption, and links cannot be revoked. Browser history/extensions/chat apps may retain them. Large schedules can use the HTML/text/ZIP export instead of a long link.
 
 Keep downloaded backups: browser data can be cleared or unavailable. Invalid saved data is not silently overwritten. Setup backups contain all private profile fields; do not commit them to a public repository. No analytics, application database or external fonts are included; hosting providers can still log ordinary page requests.
+
+Completed schedules are saved with their shuffle seed and restored without rerunning matchmaking. Failed reshuffles preserve the previous schedule. Older setup-only saved sessions regenerate asynchronously. If another planner tab saves or deletes the session, saving pauses and offers a choice of which version to keep. Recovery downloads can be imported through the normal setup importer.
+
+The export dialog lets you choose round images for a ZIP while always including the full HTML and text schedule. Large images automatically reduce resolution to bound bitmap memory. You can cancel image creation or ZIP packaging; exceptionally large packs ask you to choose fewer images.
 
 ## Upgrade from 1.0
 
@@ -121,3 +127,4 @@ docs/                    Executed test results
 ```
 
 Application code is MIT-licensed; dependencies retain their own licenses. The static distribution includes third-party notices. No club logo or font files are supplied. UI copy is English; player names support Unicode.
+
