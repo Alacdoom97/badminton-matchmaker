@@ -24,9 +24,9 @@ test('timing drafts preserve opt-outs until a valid changed value is committed',
   const start=page.getByLabel('Starts at',{exact:true});
   await start.fill('');
   expect((await saved(page)).setup.players[0].skipRounds).toEqual([1]);
-  await start.fill('18:00');await start.press('Tab');
+  await start.fill('18:00');await start.blur();
   expect((await saved(page)).setup.players[0].skipRounds).toEqual([1]);
-  await start.fill('23:30');await start.press('Tab');
+  await start.fill('23:30');await start.blur();
   await expect(page.getByRole('alert')).toContainText('same day');
   expect((await saved(page)).setup.settings.start).toBe('18:00');
   await start.fill('');await start.fill('18:30');await start.press('Enter');
@@ -89,7 +89,7 @@ test('shared views skip legacy local generation and brand navigation preserves t
   const setup=fixture(),url=await createShareLink(makeSnapshot(setup,generateSchedule(setup)),'https://example.test/');
   await page.evaluate(({key,setup})=>localStorage.setItem(key,JSON.stringify({setup,generated:true,demo:false})),{key:STORAGE_KEY,setup});
   await page.addInitScript(()=>{window.__workerStarts=0;window.Worker=class{constructor(){window.__workerStarts++;throw new Error('Local generation should not run');}};});
-  await page.goto('/'+new URL(url).hash);
+  await page.goto('/?shared-test=1'+new URL(url).hash);
   await expect(page.getByText("You're viewing a shared snapshot.",{exact:true})).toBeVisible();
   expect(await page.evaluate(()=>window.__workerStarts)).toBe(0);
   const sharedURL=page.url();
