@@ -2,12 +2,23 @@ import React,{useEffect,useState} from 'react';
 import {Icon} from './Icon.jsx';
 import {CapacityNotice} from './CapacityNotice.jsx';
 import {clock,minutes,slots,validateSettings} from '../lib/model.js';
-export function SessionPanel({settings,onChange,onCourts,onGenerate,players,busy}){
+export function SessionPanel({settings,onChange,onCourts,onGenerate,onDraftValidityChange,players,busy}){
   const rounds=slots(settings),end=clock(minutes(settings.start)+Number(settings.duration));
   const [draft,setDraft]=useState({start:settings.start,duration:String(settings.duration/60),courtCount:String(settings.courts.length)});
-  const [inputError,setInputError]=useState('');
-  useEffect(()=>{setDraft({start:settings.start,duration:String(settings.duration/60),courtCount:String(settings.courts.length)});setInputError('');},[settings.start,settings.duration,settings.courts.length]);
-  const edit=(field,value)=>{setDraft(current=>({...current,[field]:value}));setInputError('');};
+  const [inputErrors,setInputErrors]=useState({});
+  useEffect(()=>{setDraft(current=>({...current,start:settings.start}));setInputErrors(current=>({...current,start:''}));},[settings.start]);
+  useEffect(()=>{setDraft(current=>({...current,duration:String(settings.duration/60)}));setInputErrors(current=>({...current,duration:''}));},[settings.duration]);
+  useEffect(()=>{setDraft(current=>({...current,courtCount:String(settings.courts.length)}));setInputErrors(current=>({...current,courtCount:''}));},[settings.courts.length]);
+  const edit=(field,value)=>{setDraft(current=>({...current,[field]:value}));setInputErrors(current=>({...current,[field]:''}));};
+  const inputError=Object.values(inputErrors).find(Boolean) || '';
+  let invalidDraft=false;
+  try{
+    if(!draft.start || !draft.duration || !draft.courtCount)throw new Error('Complete the draft.');
+    const count=Number(draft.courtCount);
+    if(!Number.isInteger(count)||count<1||count>12)throw new Error('Invalid court count.');
+    validateSettings({...settings,start:draft.start,duration:Number(draft.duration)*60});
+  }catch{invalidDraft=true;}
+  useEffect(()=>{onDraftValidityChange?.(!invalidDraft && !inputError);},[invalidDraft,inputError,onDraftValidityChange]);
   function commit(field){
     try{
       const value=draft[field];
@@ -18,8 +29,8 @@ export function SessionPanel({settings,onChange,onCourts,onGenerate,players,busy
       }else validateSettings({...settings,...patch});
       const previous=field==='courtCount'?settings.courts.length:settings[field];
       if(patch[field]!==previous){const failure=onChange(patch);if(typeof failure==='string')throw new Error(failure);}
-      setInputError('');
-    }catch(err){setInputError(err.message);}
+      setInputErrors(current=>({...current,[field]:''}));
+    }catch(err){setInputErrors(current=>({...current,[field]:err.message}));}
   }
   const enter=e=>{if(e.key==='Enter'){e.preventDefault();e.currentTarget.blur();}};
   return <aside className="session-panel panel" aria-labelledby="session-settings-heading">
@@ -39,7 +50,7 @@ export function SessionPanel({settings,onChange,onCourts,onGenerate,players,busy
       <label className="field"><span>Rotation priority</span><select value={settings.rotationPriority || 'preferences'} onChange={e=>onChange({rotationPriority:e.target.value})}><option value="preferences">Preferred formats</option><option value="playingTime">Estimated playing time</option></select><small>Estimated playing time rotates Kungen rests more evenly, treating a Kungen round as two-thirds active time. It may use more fallback formats.</small></label>
       {inputError&&<p className="error-box" role="alert">{inputError}</p>}
       <div className="session-summary"><Icon name="spark" size={18}/><span><strong>{rounds.length} rounds</strong> to make a good match.</span></div>
-      <button className="button primary generate-button" onClick={onGenerate} disabled={busy || players.length<2 || Boolean(inputError)}><Icon name="shuffle"/>{busy?'Making your matches...':'Generate matches'}<Icon name="arrow" size={17}/></button>
+      <button className="button primary generate-button" onClick={onGenerate} disabled={busy || players.length<2 || Boolean(inputError) || invalidDraft}><Icon name="shuffle"/>{busy?'Making your matches...':'Generate matches'}<Icon name="arrow" size={17}/></button>
       {players.length<2?<p className="field-hint">Add at least 2 players to generate matches.</p>:<p className="privacy-note"><Icon name="shield" size={14}/>Your setup stays in this browser.</p>}
     </div>
   </aside>;

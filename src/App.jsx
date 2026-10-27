@@ -25,6 +25,7 @@ export default function App(){
   const [notice,setNotice]=useState(initial.notice),[error,setError]=useState(''),[busy,setBusy]=useState(false);
   const [storageEnabled,setStorageEnabled]=useState(initial.enabled),[saveStatus,setSaveStatus]=useState('saved');
   const [conflict,setConflict]=useState(null),[saveAttempt,setSaveAttempt]=useState(0);
+  const [validDrafts,setValidDrafts]=useState(true);
   const savedRawRef=useRef(initial.raw),savedContentRef=useRef(initial.enabled&&initial.raw?initial.content:null),restoreStartedRef=useRef(false);
   const uploadRef=useRef(null),workerRef=useRef(null),requestRef=useRef(0),focusRef=useRef(null);
   const readonly=Boolean(shared);
@@ -121,6 +122,7 @@ export default function App(){
   }
   function startGeneration(){
     try{
+      if(!validDrafts)throw new Error('Complete the session settings before generating matches.');
       if(conflict)throw new Error("Resolve the other tab's changes before generating a schedule.");
       const checked=validateSetup(setup);
       if(checked.players.length<2)throw new Error('Add at least two players before generating matches.');
@@ -137,7 +139,7 @@ export default function App(){
   function keepThisTab(){
     try{
       savedRawRef.current=localStorage.getItem(STORAGE_KEY);savedContentRef.current=null;restoreStartedRef.current=false;
-      setConflict(null);setSaveAttempt(value=>value+1);setNotice("Keeping this tab's session. It will replace the other saved version.");
+      setStorageEnabled(true);setConflict(null);setSaveAttempt(value=>value+1);setNotice("Keeping this tab's session. It will replace the other saved version.");
     }catch(err){setError(err.message);}
   }
   function savePlayer(player){
@@ -172,7 +174,7 @@ export default function App(){
         {!readonly&&<div className="workspace-message"><p role="status" aria-live="polite">{notice || 'Your next great game starts with a good line-up.'}</p>{!storageEnabled&&<button className="text-button" onClick={recover}>Download recovery copy</button>}{saveStatus==='failed'&&<p className="error-text">Browser storage could not save your changes. Use Save setup to keep a backup.</p>}</div>}
         {!readonly&&conflict&&<section className="error-box" aria-label="Changes in another tab"><p role="alert">Another tab changed this saved session. Saving is paused so neither version is silently overwritten. Load its saved version or keep this tab's version.</p><div className="toolbar-buttons"><button className="button secondary" onClick={loadOtherTab}>Load other tab's version</button><button className="button secondary" onClick={keepThisTab}>Keep this tab's version</button></div></section>}
         <div className={`dashboard-grid ${readonly?'shared-grid':''}`}>
-          {!readonly&&<SessionPanel settings={setup.settings} players={setup.players} onChange={changeSettings} onCourts={()=>setDialog({type:'courts'})} onGenerate={startGeneration} busy={busy}/>}
+          {!readonly&&<SessionPanel settings={setup.settings} players={setup.players} onChange={changeSettings} onCourts={()=>setDialog({type:'courts'})} onGenerate={startGeneration} onDraftValidityChange={setValidDrafts} busy={busy}/>}
           <div className="workspace"><div className="workspace-tabs" role="group" aria-label="Planner sections">{!readonly&&<button className={tab==='players'?'selected':''} aria-pressed={tab==='players'} onClick={()=>navigate('players')}><Icon name="users" size={17}/>Players <span>{shownPlayers.length}</span></button>}<button className={tab==='schedule'?'selected':''} aria-pressed={tab==='schedule'} onClick={()=>navigate('schedule')}><Icon name="court" size={17}/>Match schedule{snapshot&&<span className="ready-dot" aria-label="generated"/>}</button><span className="workspace-tabs-note">{readonly?'FIXED SNAPSHOT':'PLAY YOUR WAY'}</span></div>
             {!readonly&&<CapacityNotice settings={setup.settings} players={setup.players}/>}
             {tab==='players'&&!readonly?<PlayerList players={setup.players} settings={setup.settings} isDemo={demo} onBlank={()=>setDialog({type:'reset'})} onAdd={()=>setDialog({type:'player'})} onEdit={player=>setDialog({type:'player',player})} onRemove={player=>setDialog({type:'remove',player})}/>:<Schedule snapshot={snapshot} roundIndex={round} onRound={setRound} readonly={readonly} onGenerate={startGeneration} onExport={()=>setDialog({type:'export'})}/>}

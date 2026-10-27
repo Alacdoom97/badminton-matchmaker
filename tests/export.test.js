@@ -145,3 +145,26 @@ test('archive byte budget stops oversized images before copying their buffers', 
   assert.equal(copied, false);
   released(canvases);
 });
+
+
+test('abort immediately after queued ZIP resume stops the late stream instead of finishing it', async t => {
+  const controller = new AbortController();
+  canvasDocument(t);
+  const original = JSZip.prototype.generateInternalStream;
+  let lateChunks = 0, ended = false, observeFirst;
+  const firstChunk = new Promise(resolve => { observeFirst = resolve; });
+  t.mock.method(JSZip.prototype, 'generateInternalStream', function (...args) {
+    const stream = original.apply(this, args), resume = stream.resume;
+    stream.on('data', () => { if (controller.signal.aborted) lateChunks++; observeFirst(); });
+    stream.on('end', () => { ended = true; });
+    stream.resume = function () { const result = resume.call(this); controller.abort(); return result; };
+    return stream;
+  });
+  await assert.rejects(exportPack(fixture(), () => {}, { signal: controller.signal }), { name: 'AbortError' });
+  await firstChunk;
+  // Let queued JSZip work advance; only the unavoidable first late chunk may arrive.
+  await new Promise(resolve => setImmediate(resolve));
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(lateChunks, 1);
+  assert.equal(ended, false);
+});

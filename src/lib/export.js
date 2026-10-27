@@ -169,7 +169,12 @@ function packBlob(zip, signal) {
     };
     const abort = () => fail(cancelled());
     signal?.addEventListener('abort', abort, { once: true });
-    stream.on('data', chunk => { if (!finished) chunks.push(chunk); });
+    stream.on('data', chunk => {
+      // JSZip queues resume(): an abort may pause before that queued job runs.
+      // Pause again on its first late chunk so cancellation also stops that job.
+      if (finished || signal?.aborted) { stream.pause(); return; }
+      chunks.push(chunk);
+    });
     stream.on('error', fail);
     stream.on('end', () => {
       if (finished) return;

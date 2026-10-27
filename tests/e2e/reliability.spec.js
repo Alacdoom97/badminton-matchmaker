@@ -29,6 +29,16 @@ test('timing drafts preserve opt-outs until a valid changed value is committed',
   await start.fill('23:30');await start.blur();
   await expect(page.getByRole('alert')).toContainText('same day');
   expect((await saved(page)).setup.settings.start).toBe('18:00');
+  await page.getByLabel('Courts booked',{exact:true}).fill('4');
+  await page.getByLabel('Courts booked',{exact:true}).blur();
+  await expect(page.getByRole('button',{name:'Generate matches',exact:true})).toBeDisabled();
+  await expect(start).toHaveValue('23:30');
+  expect((await saved(page)).setup.settings.start).toBe('18:00');
+  expect((await saved(page)).setup.players[0].skipRounds).toEqual([1]);
+  await page.locator('.workspace-tabs button').last().click();
+  await page.locator('.workspace').getByRole('button',{name:'Generate matches',exact:true}).click();
+  await expect(page.getByText('Complete the session settings before generating matches.',{exact:true})).toBeVisible();
+  expect((await saved(page)).generated).toBe(false);
   await start.fill('');await start.fill('18:30');await start.press('Enter');
   await expect.poll(async()=>(await saved(page)).setup.settings.start).toBe('18:30');
   const result=await saved(page);
@@ -135,4 +145,20 @@ test('deleting saved data in another tab pauses saving until explicitly resolved
   expect(await page.evaluate(key=>localStorage.getItem(key),STORAGE_KEY)).toBeNull();
   await page.getByRole('button',{name:"Keep this tab's version",exact:true}).click();
   await expect.poll(async()=>(await saved(page))?.setup.settings.title).toBe('Kept after deletion');
+});
+
+
+test('keeping this tab re-enables saving after an initially invalid stored session',async({page,context})=>{
+  await seed(page);
+  await page.evaluate(key=>localStorage.setItem(key,'{"setup":{"version":99}}'),STORAGE_KEY);
+  await page.reload();
+  await expect(page.getByText('Local saving off',{exact:true})).toBeVisible();
+  const other=await context.newPage();await other.goto('/');
+  await expect(other.getByLabel('Session name',{exact:true})).toBeVisible();
+  await other.evaluate(({key,setup})=>localStorage.setItem(key,JSON.stringify({setup,generated:false,demo:false})),{key:STORAGE_KEY,setup:fixture()});
+  await expect(page.getByRole('region',{name:'Changes in another tab'})).toBeVisible();
+  await page.getByLabel('Session name',{exact:true}).fill('Keep this recovered draft');
+  await page.getByRole('button',{name:"Keep this tab's version",exact:true}).click();
+  await expect.poll(async()=>(await saved(page))?.setup.settings.title).toBe('Keep this recovered draft');
+  await expect(page.getByText('Saved on this device',{exact:true})).toBeVisible();
 });

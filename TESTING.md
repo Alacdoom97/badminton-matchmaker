@@ -3,8 +3,8 @@
 ## Current reliability changes
 
 - `npm ci` installs the committed dependency lockfile.
-- `npm run check` passes locally: **81 unit tests** and the production Vite build.
-- The served Playwright suite contains **24 tests**, including the existing axe, mobile layout, persistence, sharing and download checks plus 11 new reliability/export regressions.
+- `npm run check` passes locally: **82 unit tests** and the production Vite build.
+- The served Playwright suite contains **25 tests**, including the existing axe, mobile layout, persistence, sharing and download checks plus 12 new reliability/export regressions.
 - The local macOS command runner cannot launch Chromium because operating-system process permissions reject its launch. This is an environment failure before any browser test runs, not a passing browser result. The PR workflow runs the full suite on a GitHub-hosted Linux runner; consult its checks for the browser result.
 
 The new regressions cover safe timing/count drafts, successful-schedule restoration, asynchronous legacy restoration, worker construction/loading failures, share-fragment preservation, recovery-envelope import, concurrent-tab conflict resolution and deletion, selected ZIP images, export cancellation, canvas cleanup, image/ZIP memory limits, seeded first-game ties, equivalent mixed selection, optional estimated-playing-time rotation and Stockholm daylight-saving boundaries.
